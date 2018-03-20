@@ -1,0 +1,12 @@
+Package: ShoeprintCleanR
+Title: Functions for cleaning and analyzing shoeprints
+Version: 0.0.0.9000
+Authors@R: person("Susan", "VanderPlas", email = "srvanderplas@gmail.com", role = c("aut", "cre"))
+Description: Functions to clean and analyze shoeprint data for forensic analysis
+Depends: R (>= 3.4.4)
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
+Suggests: testthat
+VignetteBuilder: knitr
+RoxygenNote: 6.0.1
