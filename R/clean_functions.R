@@ -283,23 +283,23 @@ align_shoe_print <- function(shoe) {
     select(-z, -cc)
   
   rot_matrix <- prcomp(rot_ds) %>%
-    magrittr::extract2("rotation")
+    magrittr::extract2("rotation") %>%
+    as.data.frame()
   
-  rot_sign <- ifelse (rot_matrix[1,2] > 0, -1, 1)
+  rot_angle_a <- rot_matrix$PC1[1]/rot_matrix$PC1[2] %>%
+    atan()
   
-  rot_angle <- rot_matrix %>%
-    magrittr::extract(1) %>%
-    asin() %>%
+  rot_sign <- ifelse (diff(sign(rot_matrix$PC1)) == 0, -1, 1)
+  
+  rot_angle <- rot_angle_a %>%
     magrittr::multiply_by(180/pi) %>%
     magrittr::multiply_by(rot_sign) %>%
     unlist()
   
-  rot_shoe <- imrotate(shoe, -rot_angle, boundary = 0) %>%
-    # Fill in corners
-    bucketfill(x = 1, y = 1, color = fill_color, sigma = 5)  %>%
-    bucketfill(x = width(.), y = 1, color = fill_color, sigma = 5) %>%
-    bucketfill(x = width(.), y = height(.), color = fill_color, sigma = 5) %>%
-    bucketfill(x = 1, y = height(.), color = fill_color, sigma = 5)
+  shoe_whiteborder <-  shoe
+  shoe_whiteborder[px.borders(shoe, 2)] <- fill_color
+  
+  rot_shoe <- imrotate(shoe_whiteborder, rot_angle, boundary = 1)
   
   rot_shoe
 }
