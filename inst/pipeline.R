@@ -41,4 +41,8 @@ process_shoe <- function(i) {
   gc()
 }
 
+process_shoe(pic_paths[1])
+
+library(parallel)
+mclapply(pic_paths[1:10], process_shoe, mc.cores = 2)
 
