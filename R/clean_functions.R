@@ -296,8 +296,10 @@ align_shoe_print <- function(shoe) {
     magrittr::multiply_by(rot_sign) %>%
     unlist()
   
-  shoe_whiteborder <-  shoe
-  shoe_whiteborder[px.borders(shoe, 2)] <- fill_color
+  shoe_whiteborder <-  shoe %>%
+    pad(nPix = 10, axes = "xy", pos = -1, val = 0) %>%
+    pad(nPix = 10, axes = "xy", pos = 1, val = 0) %>%
+    bucketfill(1, 1, 1, color = fill_color)
   
   rot_shoe <- imrotate(shoe_whiteborder, rot_angle, boundary = 1)
   
