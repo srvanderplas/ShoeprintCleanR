@@ -20,11 +20,8 @@ process_shoe <- function(i) {
     quantize_colors(4) %>%
     remove_border_lines(maxiter = 10) %>%
     crop_border(axis = "xy", tol = .1) %>%
-    pad(nPix = 10, axes = "xy", pos = -1, val = 0) %>%
-    pad(nPix = 10, axes = "xy", pos = 1, val = 0) %>%
-    bucketfill(1, 1, 1, color = 255) %>%
     align_shoe_print()  %>%
-    crop_border(axis = "xy")
+    crop_border(axis = "xy", tol = 0.01, sigma = 30)
   
   if (width(shoe) < 10) {
     print("Shoe process not wide enough")
