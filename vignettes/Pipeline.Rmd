@@ -1,0 +1,88 @@
+---
+title: "Cleaning Shoeprints: Pipeline"
+author: "Susan VanderPlas"
+date: "`r Sys.Date()`"
+output:
+  rmarkdown::html_vignette:
+    fig_caption: yes
+vignette: >
+  %\VignetteIndexEntry{Cleaning Shoeprints: Pipeline}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>")
+```
+## Ideas
+
+- Wallis filter to enhance details
+
+## Initial pipeline
+```{r read-images, include = T, echo = T}
+pic_paths <- list.files("/storage/CSAFE/Test Shoes/Prints/", 
+                        full.names = T, 
+                        pattern = "(\\d{1,}[LR]_\\d{8}_\\d_\\d_\\d_csafe_[a-z]{1,}).tif$")
+library(imager)
+suppressPackageStartupMessages(library(tidyverse))
+library(ShoeprintCleanR)
+
+i <- which(str_detect(pic_paths, "006070R_20171113_6_1_1_csafe_jekruse"))
+orig_shoe <- shoe <- load.image(pic_paths[i])
+
+plot(shoe)
+```
+
+The first step after loading the shoeprint image is to reduce the number of colors in the image. It is already in greyscale, but reducing the number of colors will make the processing stage significantly easier.
+
+```{r reduce-colors}
+shoe <- quantize_colors(shoe, 8)
+plot(shoe)
+```
+
+Once the shoe has been quantized, the next step is to remove the label from the image.
+```{r remove-label}
+shoe <- remove_print_label(shoe, thr = "10%")
+plot(shoe)
+```
+
+Once the label is removed, the image is divided up into a grid of sub-images. For each sub-image, the "local background" is computed using the median. Any pixels which are lighter than the local background, or which are within 10 shades of the local background (0-255, where 255 is white), are replaced with 255/white. This largely removes the effect of any shadows, while keeping the shoe intact.
+```{r, message = F, warning = F, results = F, include = 2}
+shoe <- remove_local_background(shoe)
+plot(shoe)
+```
+
+Any remaining long, straight lines are removed from the image (this process is repeated several times in order to remove thick lines which may not be correctly identified by the algorithm on one pass).
+```{r}
+shoe <- shoe %>% 
+  quantize_colors(4) %>%
+  remove_border_lines(maxiter = 10)
+plot(shoe)
+```
+
+Next, the shoe image is cropped to remove remaining border information
+```{r}
+crop_shoe <- crop_border(shoe, axis = "xy", tol = .1)
+plot(crop_shoe)
+```
+
+The relatively clean shoe print image is then rotated using principal components.
+```{r}
+rot_shoe <- align_shoe_print(crop_shoe)
+plot(rot_shoe)
+```
+
+Finally, the shoe is cropped again in order to remove any excess white space.
+```{r}
+shoe <- crop_border(rot_shoe, axis = "xy")
+plot(shoe)
+```
+
+
+
+
+
+
+
