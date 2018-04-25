@@ -18,17 +18,24 @@ remove_print_label <- function(shoe, ...) {
   }
   replace_color <- max(shoe) 
   
+  
+  
   # This identifies the label if it is bigger than 50 px and dark
   z <- threshold(shoe, thr = thr) %>%
     grow(100) %>%
     shrink(125)
   
+  zlab <- label(z) # Label continuous areas
+  chunks <- table(zlab) %>% sort() %>% rev() # Get frequencies/areas in correct order
+  chunks <- chunks[-1] # Remove largest chunk - background
+  
+  largest_region <- zlab == as.numeric(names(chunks)[1])
+  
   # Only remove label if it has a reasonable area
-  islabeled <- mean(z) < .98
+  islabeled <- mean(!largest_region) < .98
   
   if (islabeled) {
-    px <- z < median(z)
-    shoe[px] <- replace_color
+    shoe[largest_region] <- replace_color
   }
   
   return(shoe)
@@ -263,7 +270,9 @@ crop_border <- function(shoe, axis = "xy", sigma = 10, tol = 0.01) {
 #' 
 #' @param shoe cimg
 #' @export
-#' @import magrittr
+#' @importFrom magrittr '%>%'
+#' @importFrom magrittr extract2
+#' @importFrom magrittr multiply_by
 #' @import imager
 align_shoe_print <- function(shoe) {
   
