@@ -239,6 +239,11 @@ crop_border <- function(shoe, axis = "xy", sigma = 10, tol = 0.01) {
       xxmod <- isoblur(xx, sigma)
       yy <- apply(xxmod, 1, mean) 
       zz <- which(abs(yy - max(yy)) < tol) %>% max()
+      
+      # Don't crop if removing more than 25% of the image
+      if (zz > .5*length(yy)) {
+        zz <-  -1
+      }
       imsub(xx, x > (zz + 1)) 
     }) 
     
@@ -254,7 +259,12 @@ crop_border <- function(shoe, axis = "xy", sigma = 10, tol = 0.01) {
     tshoe_yfix <- lapply(tshoe_y, function(xx) {
       xxmod <- isoblur(xx, sigma)
       yy <- apply(xxmod, 2, mean) 
-      zz <- which(abs(yy - max(yy)) < tol) %>% max()
+      zz <- which(abs(yy - max(yy)) < tol) %>% max()   
+      
+      # Don't crop if removing more than 25% of the image
+      if (zz > .5*length(yy)) {
+        zz <-  -1
+      }
       imsub(xx, y > (zz + 1)) 
     }) 
     
@@ -264,6 +274,38 @@ crop_border <- function(shoe, axis = "xy", sigma = 10, tol = 0.01) {
   }
   
   return(modimg)
+}
+
+#' add 10 white pixels around the image
+#' 
+#' @param shoe cimg
+#' @return cimg
+#' @import imager
+#' @export
+pad_white <- function(shoe) {
+  shoe %>%
+    pad(nPix = 10, axes = "xy", pos = -1, val = 0) %>%
+    pad(nPix = 10, axes = "xy", pos = 1, val = 0) %>%
+    bucketfill(1, 1, 1, color = max(shoe))
+}
+
+
+#' Clip corners of an image
+#' 
+#' Rotate by 45 degrees, crop, then rotate back.
+#' @param shoe
+#' @return cimg
+#' @import imager
+#' @export
+clip_corners <- function(shoe){
+  
+  shoe %>% 
+    pad_white() %>%
+    imrotate(angle = 45, boundary = 1) %>%
+    crop_border(tol = .1, sigma = 5) %>%
+    pad_white() %>%
+    imrotate(angle = -45, boundary = 1) %>%
+    crop_border(tol = .1, sigma = 5)
 }
 
 #' Rotate the shoe print
@@ -276,7 +318,7 @@ crop_border <- function(shoe, axis = "xy", sigma = 10, tol = 0.01) {
 #' @import imager
 align_shoe_print <- function(shoe) {
   
-  fill_color <- 255
+  fill_color <- max(shoe)
   
   # Get img dimensions
   img_width <- width(shoe)
