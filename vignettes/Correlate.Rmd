@@ -20,15 +20,15 @@ plot(shoes)
 
 ```{r, fig.width = 12, fig.height = 12}
 edgekern <- matrix(-2, nrow = 3, ncol = 3)
-edgekern[2,2] <- 8
+edgekern[2,2] <- 16
 
 newshoes <- shoes %>% 
   map(~.x %>% 
         correlate(as.cimg(edgekern)) %>% 
-        {255 - .} %>%
+        # {255 - .} %>%
         quantize_colors(25) %>%
         renorm()) %>%
   as.imlist()
 
-plot(as.imlist(newshoes))
+plot(newshoes)
 ```

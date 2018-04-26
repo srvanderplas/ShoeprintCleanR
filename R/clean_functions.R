@@ -294,18 +294,19 @@ pad_white <- function(shoe) {
 #' 
 #' Rotate by 45 degrees, crop, then rotate back.
 #' @param shoe
+#' @param tol tolerance for crop step
+#' @param sigma blur radius for crop step
 #' @return cimg
 #' @import imager
 #' @export
-clip_corners <- function(shoe){
+clip_corners <- function(shoe, tol = .1, sigma = 5){
   
   shoe %>% 
     pad_white() %>%
     imrotate(angle = 45, boundary = 1) %>%
-    crop_border(tol = .1, sigma = 5) %>%
+    crop_border(tol = tol, sigma = sigma) %>%
     pad_white() %>%
-    imrotate(angle = -45, boundary = 1) %>%
-    crop_border(tol = .1, sigma = 5)
+    imrotate(angle = -45, boundary = 1)
 }
 
 #' Rotate the shoe print
