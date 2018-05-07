@@ -46,8 +46,37 @@ save_path <- "inst/cleandata/"
 #   gc()
 #   tmp
 # }
+# 
+# # Process film prints
+# process_shoe <- function(i) {
+#   shoe <- load.image(i) %>%
+#     renorm() 
+#   
+#   shoedens <- density(shoe)
+#   mode <- shoedens$x[which.max(shoedens$y)] # Most common value
+#   
+#   shoe[shoe >= (mode*.95)] <- 255
+#   
+#   shoe <- shoe %>%
+#     quantize_colors(4) %>%
+#     crop_border(tol = .01, sigma = 80) %>%
+#     align_shoe_print()
+#   
+#   plot(shoe)
+#   
+#   filename <- str_replace(i, ".tif", "-tif-shoeonly2.jpg") %>%
+#     str_replace("inst/localdata/", save_path)
+#   
+#   save.image(shoe, file = filename, quality = 1)
+#   
+#   tmp <- dim(shoe)
+#   # return(shoe)
+#   rm(shoe)
+#   gc()
+#   tmp
+# }
 
-# Process film prints
+
 process_shoe <- function(i) {
   shoe <- load.image(i) %>%
     renorm() 
@@ -58,32 +87,32 @@ process_shoe <- function(i) {
   shoe[shoe >= (mode*.95)] <- 255
   
   shoe <- shoe %>%
-    quantize_colors(4) %>%
-    crop_border(tol = .01, sigma = 80) %>%
-    align_shoe_print()
+    remove_border_lines(n = 50, maxiter = 2) %>%
+    quantize_colors(8) %>%
+    crop_border() %>%
+    clip_corners() %>%
+    align_shoe_print() %>%
+    crop_border() 
   
   plot(shoe)
   
-  filename <- str_replace(i, ".tif", "-tif-shoeonly2.jpg") %>%
-    str_replace("inst/localdata/", save_path)
+    filename <- str_replace(i, ".tif", "-tif-clean.jpg") %>%
+      str_replace("inst/localdata/", save_path)
+
+    save.image(shoe, file = filename, quality = 1)
   
-  save.image(shoe, file = filename, quality = 1)
-  
-  tmp <- dim(shoe)
-  # return(shoe)
-  rm(shoe)
-  gc()
-  tmp
+  return(shoe)
 }
+
 
 
 # process_shoe(pic_paths[1])
 
 
-setup_cluster <- function(){
+setup_cluster <- function(cores = availableCores()){
   # Hack to kill future workers
   # https://github.com/HenrikBengtsson/future/issues/93
-  cl <- makeClusterPSOCK(availableCores())
+  cl <- makeClusterPSOCK(cores)
   
   # Get PIDs
   for (kk in seq_along(cl)) {
@@ -102,7 +131,7 @@ kill_cluster <- function(cl){
   lapply(cl, function(x) pskill(x$session_info$process$pid))
 }
 
-cl <- setup_cluster()
+cl <- setup_cluster(36)
 
 # plan(multicore)
 system.time(cleanshoes <- pic_paths %>%
